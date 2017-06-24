@@ -55,7 +55,7 @@ app.get('/', function(req, res) {
       display.push('_ ')
     }
   }
-  if(sess['views']['/'] > 1){
+  if(sess['views']['/chances'] >= 1){
     chances = 8 - sess['views']['/chances']
   }
   return res.render('index', {
