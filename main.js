@@ -5,6 +5,7 @@ const session = require('express-session')
 const bodyParser = require('body-parser')
 const parseurl = require('parseurl')
 const fs = require('fs-extra');
+expressValidator = require('express-validator')
 
 app.set('views', __dirname + '/views')
 app.engine('mustache', mustache() )
@@ -21,6 +22,7 @@ app.use(session({
 }))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}))
+app.use(expressValidator())
 app.use(function (req, res, next) {
   var views = req.session.views
   if (!views) {
@@ -32,19 +34,27 @@ app.use(function (req, res, next) {
   return next()
 })
 
-const words = fs.readFileSync("/usr/share/dict/words", "utf-8").toLowerCase().split("\n")
-const getWord = words[Math.floor((Math.random() * 235887))]
+const words = fs.readFileSync("/usr/share/dict/words", "utf-8").toUpperCase().split("\n")
+let getWord = words[Math.floor((Math.random() * 235887))]
+let word = []
+let display = []
+let guessedLetters = []
+let gameOverWin = true
+let gameOverLose = false
+let tryAgain = ''
+let gameOverMsgLose = ''
+let gameOverMsgWin = ''
+
 var sess
-const word = []
-const display = []
-const guessedLetters = []
 var split
+var errors
 
 
 app.get('/', function(req, res) {
   sess = req.session
   sess.getWord = getWord
   let chances = 8
+  let gameOverWin = true
   console.log(sess)
   const newGuess = guessedLetters.join(" ")
   if(sess['views']['/'] === 1) {
@@ -58,10 +68,45 @@ app.get('/', function(req, res) {
   if(sess['views']['/chances'] >= 1){
     chances = 8 - sess['views']['/chances']
   }
+  if(errors) {
+    let errorMsg = errors[0].msg
+    tryAgain = ''
+    return res.render('index', {
+      check: display,
+      guessed: newGuess,
+      chances: chances,
+      tryAgain: tryAgain,
+      gameOverMsgLose: gameOverMsgLose,
+      gameOverMsgWin: gameOverMsgWin,
+      errorMsg: errorMsg
+    })
+  }
+  for (var i = 0; i < display.length; i++) {
+   if('_ ' === display[i]) {
+     gameOverWin = false
+   }
+  }
+  if(chances === 0) {
+    gameOverLose = true
+    gameOverMsgLose = 'GAME OVER YOU LOSE!'
+  }
+  if(gameOverLose) {
+    for (var i = 0; i < display.length; i++) {
+      if('_ ' === display[i]){
+        display.splice(i, 1, word[i])
+      }
+    }
+  }
+  if(gameOverWin) {
+    gameOverMsgWin = 'GAME OVER YOU WIN!'
+  }
   return res.render('index', {
     check: display,
     guessed: newGuess,
-    chances: chances
+    chances: chances,
+    tryAgain: tryAgain,
+    gameOverMsgLose: gameOverMsgLose,
+    gameOverMsgWin: gameOverMsgWin
   })
 })
 
@@ -70,19 +115,60 @@ app.get('/chances', function(req,res){
 })
 
 app.post('/guess', function(req,res){
-  sess = req.session
-  const guess = (req.body.guess).toLowerCase()
-  guessedLetters.push(guess)
-  let wrong = true
-  for (var i = 0; i < split.length; i++) {
-    if(guess === split[i]) {
-      display.splice(i, 1, guess)
-      wrong = false
+  req.checkBody("guess", "You must enter a letter!").notEmpty();
+  req.checkBody("guess", "Only letters are accepted!").isAlpha();
+  req.checkBody("guess", "Please enter only one letter at a time!").isLength({min:0, max:1});
+  errors = req.validationErrors();
+  console.log(errors)
+    if (!errors) {
+      sess = req.session
+      const guess = (req.body.guess).toUpperCase()
+      let alreadyGuessed = false
+      for (var i = 0; i < guessedLetters.length; i++) {
+        if(guess === guessedLetters[i]) {
+          alreadyGuessed = true
+        }
+      }
+      if(alreadyGuessed) {
+        tryAgain = 'You have already guessed that letter. Please enter another letter'
+      } else {
+        tryAgain = ''
+        guessedLetters.push(guess)
+        let wrong = true
+        for (var i = 0; i < split.length; i++) {
+          if(guess === split[i]) {
+            display.splice(i, 1, guess)
+            wrong = false
+          }
+        }
+        if(wrong) {
+          return res.redirect('/chances')
+        }
+      }
     }
-  }
-  console.log('wrong', wrong)
-  if(wrong) {
-    return res.redirect('/chances')
-  }
+  return res.redirect('/')
+})
+app.post('/newGame', function(req,res) {
+  sess = req.session
+  gameOverWin = true
+  gameOverLose = false
+  tryAgain = ''
+  gameOverMsgLose = ''
+  gameOverMsgWin = ''
+  word = []
+  display = []
+  guessedLetters = []
+  sess['views']['/'] = 0
+  sess['views']['/chances'] = 0
+  sess['getWord'] = ''
+  // if(req.body.easy === 'easy'){
+  //   let newWord = words[Math.floor((Math.random() * 235887))]
+  //   for (var i = 0; newWord.length >= 4 && newWord.length <= 6; i++) {
+  //     newWord = words[Math.floor((Math.random() * 235887))]
+  //   }
+  //   getWord = newWord
+  //   console.log('YOUR ON EASY')
+  // }
+  getWord = words[Math.floor((Math.random() * 235887))]
   return res.redirect('/')
 })
