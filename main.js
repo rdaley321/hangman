@@ -5,7 +5,7 @@ const session = require('express-session')
 const bodyParser = require('body-parser')
 const parseurl = require('parseurl')
 const fs = require('fs-extra');
-expressValidator = require('express-validator')
+const expressValidator = require('express-validator')
 
 app.set('views', __dirname + '/views')
 app.engine('mustache', mustache() )
@@ -45,13 +45,12 @@ let gameOverLose = false
 let tryAgain = ''
 let gameOverMsgLose = ''
 let gameOverMsgWin = ''
+let takeAGuess = 1
+let gameOver = 0
 
 var sess
 var split
 var errors
-var takeAGuess = 1
-var gameOver = 0
-
 
 app.get('/', function(req, res) {
   sess = req.session
