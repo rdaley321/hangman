@@ -15,6 +15,7 @@ app.listen(3000, function(){
   console.log("ok cool, listening!")
 });
 
+app.use(express.static(__dirname + '/public'))
 app.use(session({
   secret: 'keyboard cat',
   resave: false,
@@ -48,6 +49,8 @@ let gameOverMsgWin = ''
 var sess
 var split
 var errors
+var takeAGuess = 1
+var gameOver = 0
 
 
 app.get('/', function(req, res) {
@@ -62,7 +65,7 @@ app.get('/', function(req, res) {
     split = word[0].split('')
     console.log(split)
     for (var i = 0; i < split.length; i++) {
-      display.push('_ ')
+      display.push(' _ ')
     }
   }
   if(sess['views']['/chances'] >= 1){
@@ -78,26 +81,29 @@ app.get('/', function(req, res) {
       tryAgain: tryAgain,
       gameOverMsgLose: gameOverMsgLose,
       gameOverMsgWin: gameOverMsgWin,
-      errorMsg: errorMsg
+      errorMsg: errorMsg,
+      takeAGuess: takeAGuess,
+      gameOver: gameOver
     })
   }
   for (var i = 0; i < display.length; i++) {
-   if('_ ' === display[i]) {
+   if(' _ ' === display[i]) {
      gameOverWin = false
    }
   }
   if(chances === 0) {
+    takeAGuess = 0
+    gameOver = 1
     gameOverLose = true
     gameOverMsgLose = 'GAME OVER YOU LOSE!'
   }
   if(gameOverLose) {
-    for (var i = 0; i < display.length; i++) {
-      if('_ ' === display[i]){
-        display.splice(i, 1, word[i])
-      }
-    }
+    display = sess['getWord']
+    console.log(sess['getWord'])
   }
-  if(gameOverWin) {
+  if(gameOverWin && !gameOverLose) {
+    takeAGuess = 0
+    gameOver = 1
     gameOverMsgWin = 'GAME OVER YOU WIN!'
   }
   return res.render('index', {
@@ -106,7 +112,9 @@ app.get('/', function(req, res) {
     chances: chances,
     tryAgain: tryAgain,
     gameOverMsgLose: gameOverMsgLose,
-    gameOverMsgWin: gameOverMsgWin
+    gameOverMsgWin: gameOverMsgWin,
+    takeAGuess: takeAGuess,
+    gameOver: gameOver
   })
 })
 
@@ -120,6 +128,7 @@ app.post('/guess', function(req,res){
   req.checkBody("guess", "Please enter only one letter at a time!").isLength({min:0, max:1});
   errors = req.validationErrors();
   console.log(errors)
+  console.log(split)
     if (!errors) {
       sess = req.session
       const guess = (req.body.guess).toUpperCase()
@@ -150,6 +159,8 @@ app.post('/guess', function(req,res){
 })
 app.post('/newGame', function(req,res) {
   sess = req.session
+  takeAGuess = 1
+  gameOver = 0
   gameOverWin = true
   gameOverLose = false
   tryAgain = ''

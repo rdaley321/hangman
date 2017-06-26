@@ -2,31 +2,45 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link rel='stylesheet' href='main.css'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
     <title>Hangman</title>
   </head>
   <body>
-    <h1>Welcome to the hangman game!</h1>
-    <form class="" action="/newGame" method="post">
+    <h1 class="title">Welcome to the hangman game!</h1>
+    <form class="new-game" action="/newGame" method="post">
       <button type="submit" name="button">New Game</button>
-      <!-- <input type="radio" name="easy" value="easy">
-      <label for="easy">Easy</label>
-      <input type="radio" name="normal" value="normal">
-      <label for="normal">Normal</label>
-      <input type="radio" name="hard" value="hard">
-      <label for="hard">Hard</label> -->
     </form>
+    <h1 class="solution">{{#check}}{{.}}{{/check}}</h1>
+    <h1 class="lose">{{gameOverMsgLose}}</h1>
+    <h1 class="win">{{gameOverMsgWin}}</h1>
+    {{#takeAGuess}}
     <h2>Type your guesses here:</h2>
-    <span>{{tryAgain}}</span>
-    <span>{{errorMsg}}</span>
-    <form class="" action="/guess" method="post">
-      <input autofocus="autofocus" placeholder="Your guess" type="text" name="guess" value="">
-      <input type="submit" name="submit" value="Enter">
-    </form>
-    <span>You have {{chances}} chances remaining</span>
-    <h1>{{gameOverMsgLose}}</h1>
-    <h1>{{gameOverMsgWin}}</h1>
-    <h1>{{#check}}{{.}}{{/check}}</h1>
-    <h1>You have already guessed these letters:</h1>
-    <h2>{{guessed}}</h2>
+    <div class="guess">
+      <span class="try-again">{{tryAgain}}</span>
+      <span class="error-msg">{{errorMsg}}</span>
+      <form class="" action="/guess" method="post">
+        <input autofocus="autofocus" placeholder="Your guess" type="text" name="guess" value="">
+        <input type="submit" name="submit" value="Enter">
+      </form>
+      <span class="chances">You have {{chances}} chances remaining</span>
+    </div>
+    {{/takeAGuess}}
+    {{#gameOver}}
+    <div class="over">
+      <form class="" action="/newGame" method="post">
+        <button type="submit" name="button">Try Again</button>
+      </form>
+    </div>
+    {{/gameOver}}
+    <h1 class="guessed-header">You have already guessed these letters:</h1>
+    <h2 class="guessed">{{guessed}}</h2>
   </body>
 </html>
+
+<!-- <input type="radio" name="easy" value="easy">
+<label for="easy">Easy</label>
+<input type="radio" name="normal" value="normal">
+<label for="normal">Normal</label>
+<input type="radio" name="hard" value="hard">
+<label for="hard">Hard</label> -->
