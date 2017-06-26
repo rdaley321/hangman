@@ -36,7 +36,7 @@ app.use(function (req, res, next) {
 })
 
 const words = fs.readFileSync("/usr/share/dict/words", "utf-8").toUpperCase().split("\n")
-let getWord = words[Math.floor((Math.random() * 235887))]
+let getWord = words[Math.floor((Math.random() * words.length))]
 let word = []
 let display = []
 let guessedLetters = []
@@ -179,6 +179,6 @@ app.post('/newGame', function(req,res) {
   //   getWord = newWord
   //   console.log('YOUR ON EASY')
   // }
-  getWord = words[Math.floor((Math.random() * 235887))]
+  getWord = words[Math.floor((Math.random() * words.length))]
   return res.redirect('/')
 })
